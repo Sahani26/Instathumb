@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Instagram Photo Generator</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.1/dist/cropper.min.css" />
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f2f2f2;
+            text-align: center;
+        }
+
+        .preview {
+            width: 400px;
+            margin: 20px auto;
+        }
+
+        img {
+            max-width: 100%;
+        }
+
+        canvas {
+            display: block;
+            margin: 20px auto;
+            max-width: 90%;
+            border: 2px solid #333;
+        }
+        canvas#canvas {
+    width: 340px;
+}
+
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>Instagram Photo Generator</h2>
+
+    <input type="file" id="upload" accept="image/*">
+
+    <div class="preview">
+        <img id="image">
+    </div>
+
+    <button id="cropBtn">Generate Instagram Post</button>
+
+    <h3 id="finalTitle" style="display:none;">Final Instagram Image</h3>
+    <canvas id="canvas" width="1080" height="1080"></canvas>
+
+    <button id="downloadBtn" style="display:none;">Download Image</button>
+
+    <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.1/dist/cropper.min.js"></script>
+
+    <script>
+        let cropper, croppedImage;
+        const image = document.getElementById("image");
+        const upload = document.getElementById("upload");
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+
+        const downloadBtn = document.getElementById("downloadBtn");
+        const finalTitle = document.getElementById("finalTitle");
+
+        // Logo
+        const logo = new Image();
+        logo.crossOrigin = "anonymous";
+        logo.src = "https://www.powercoolfix.com/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fheader-logo.17093a1a.png&w=256&q=75";
+
+        // Upload
+        upload.addEventListener("change", e => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = () => {
+                image.src = reader.result;
+                if (cropper) cropper.destroy();
+
+                cropper = new Cropper(image, {
+                    aspectRatio: 1,
+                    viewMode: 1
+                });
+
+                finalTitle.style.display = "none";
+                downloadBtn.style.display = "none";
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // Generate final image
+        document.getElementById("cropBtn").addEventListener("click", () => {
+            if (!cropper) return;
+
+            croppedImage = cropper.getCroppedCanvas({
+                width: 1080,
+                height: 1080
+            });
+
+            const drawFinal = () => {
+                ctx.clearRect(0, 0, 1080, 1080);
+                ctx.drawImage(croppedImage, 0, 0, 1080, 1080);
+
+                // ===== TEXT STRIP AT BOTTOM =====
+                const textHeight = 100;
+                const textY = 1080 - textHeight;
+                ctx.fillStyle = "#ddd";
+                ctx.fillRect(0, textY, 1080, textHeight);
+
+                ctx.fillStyle = "#224771";
+                ctx.font = "bold 36px Arial";
+                ctx.textBaseline = "middle";
+                ctx.fillText("Mob: +91 9424213312", 40, textY + textHeight / 2);
+                // ===== LOGO BADGE AT BOTTOM RIGHT WITH CUSTOM WIDTH & HEIGHT =====
+                const logoWidth = 220;     // logo image width
+                const logoHeight = 90;    // logo image height
+                const padding = 10;        // padding around logo
+                const bgHeight = 30;       // height of the logo background (can be taller than logo)
+                const x = 1080 - logoWidth - 40;
+                const y = 1080 - bgHeight - 40; // position the background from bottom
+
+                // Draw white background
+                ctx.fillStyle = "#f2f2f200";
+                ctx.fillRect(x - padding, y - padding, logoWidth + padding * 2, bgHeight);
+
+                // Draw logo centered vertically inside the background
+                const logoYCentered = y + (bgHeight - logoHeight) / 2;
+                ctx.drawImage(logo, x, logoYCentered, logoWidth, logoHeight);
+
+
+
+                finalTitle.style.display = "block";
+                downloadBtn.style.display = "inline-block";
+            };
+
+            if (logo.complete) drawFinal();
+            else logo.onload = drawFinal;
+        });
+
+        // Download
+        downloadBtn.addEventListener("click", () => {
+            const link = document.createElement("a");
+            link.download = "instagram-post.png";
+            link.href = canvas.toDataURL("image/png");
+            link.click();
+        });
+    </script>
+
+</body>
+
+</html>
