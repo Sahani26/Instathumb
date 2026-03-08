@@ -1,14 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
 <meta charset="UTF-8">
 <title>Instagram Video Generator</title>
 
 <style>
-
 body{
-font-family:Arial, sans-serif;
+font-family:Arial;
 background:#f2f2f2;
 text-align:center;
 }
@@ -21,35 +19,21 @@ margin-top:20px;
 canvas{
 display:block;
 margin:20px auto;
-width:90vw;
 max-width:400px;
+width:90vw;
 border:2px solid #333;
-}
-
-input{
-font-size:20px;
-background:#003769;
-color:#fff;
-padding:10px 14px;
-border-radius:8px;
-border:none;
 }
 
 button{
 padding:12px 24px;
 margin:10px;
-cursor:pointer;
 font-size:20px;
 background:#003769;
 color:#fff;
 border:none;
 border-radius:8px;
+cursor:pointer;
 }
-
-button:hover{
-background:#004c8c;
-}
-
 </style>
 
 </head>
@@ -66,7 +50,7 @@ background:#004c8c;
 
 <canvas id="canvas" width="1080" height="1080"></canvas>
 
-<button id="downloadBtn" style="display:none;">Download Video</button>
+<button id="downloadBtn">Download Video</button>
 
 <script>
 
@@ -76,85 +60,85 @@ const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 const downloadBtn = document.getElementById("downloadBtn");
 
-let videoFile;
+let recorder;
+let chunks = [];
 
 const logo = new Image();
-logo.crossOrigin="anonymous";
 logo.src="https://www.powercoolfix.com/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fheader-logo.17093a1a.png&w=256&q=75";
 
-upload.addEventListener("change", function(e){
+upload.addEventListener("change",(e)=>{
 
-videoFile = e.target.files[0];
-
-if(!videoFile) return;
-
-const url = URL.createObjectURL(videoFile);
+const file = e.target.files[0];
+const url = URL.createObjectURL(file);
 
 video.src = url;
 video.load();
 
-video.addEventListener("loadedmetadata", function(){
-video.currentTime = 1;
 });
 
-});
-
-video.addEventListener("seeked", function(){
-
-ctx.clearRect(0,0,1080,1080);
+function drawFrame(){
 
 ctx.drawImage(video,0,0,1080,1080);
 
-const textHeight = 100;
-const textY = 1080 - textHeight;
+const textHeight=100;
+const textY=1080-textHeight;
 
-ctx.fillStyle = "#ddd";
+ctx.fillStyle="#ddd";
 ctx.fillRect(0,textY,1080,textHeight);
 
-ctx.fillStyle = "#224771";
-ctx.font = "bold 36px Arial";
-ctx.fillText("Mob: +91 9428213314",40,textY + 60);
+ctx.fillStyle="#224771";
+ctx.font="bold 36px Arial";
+ctx.fillText("Mob: +91 9428213314",40,textY+60);
 
-const logoWidth = 220;
-const logoHeight = 90;
+const logoWidth=220;
+const logoHeight=90;
 
-ctx.drawImage(logo,1080 - logoWidth - 40,1080 - logoHeight - 40,logoWidth,logoHeight);
+ctx.drawImage(logo,1080-logoWidth-40,1080-logoHeight-40,logoWidth,logoHeight);
 
-downloadBtn.style.display="inline-block";
+requestAnimationFrame(drawFrame);
 
-});
-
-downloadBtn.addEventListener("click", () => {
-
-if (!videoFile) {
-alert("Upload video first");
-return;
 }
 
-const reader = new FileReader();
+video.addEventListener("play",drawFrame);
 
-reader.onload = function(e){
+downloadBtn.addEventListener("click",()=>{
 
-const link = document.createElement("a");
+const stream = canvas.captureStream(30);
 
-link.href = e.target.result;
+recorder = new MediaRecorder(stream,{
+mimeType:"video/webm"
+});
 
-link.download = videoFile.name || "instagram-video.mp4";
+chunks=[];
 
-document.body.appendChild(link);
+recorder.ondataavailable=e=>{
+if(e.data.size>0) chunks.push(e.data);
+};
 
-link.click();
+recorder.onstop=()=>{
 
-document.body.removeChild(link);
+const blob=new Blob(chunks,{type:"video/webm"});
+const url=URL.createObjectURL(blob);
+
+const a=document.createElement("a");
+a.href=url;
+a.download="instagram-video.webm";
+a.click();
 
 };
 
-reader.readAsDataURL(videoFile);
+video.currentTime=0;
+video.play();
+
+recorder.start();
+
+video.onended=()=>{
+recorder.stop();
+};
 
 });
 
 </script>
 
 </body>
-
 </html>
